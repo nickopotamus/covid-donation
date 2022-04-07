@@ -2,6 +2,8 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Functions for importing and munging data                                 #
 # Nick Plummer (nickplummer@cantab.net)                                       #
+# Revision 2 (18/3/22)                                                        #
+# Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 # Weekly data set for plotting ----
@@ -221,7 +223,6 @@ get_referrals <- function() {
   return(referrals_long)
 }
 
-# TODO
 
 # Wave PDA data ----
 

@@ -1,3 +1,11 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Exploring the impact of COVID-19 on organ donation and transplant rates     #
+#  - R environment set up and key variables                                   #
+# Nick Plummer (nickplummer@cantab.net)                                       #
+# Revision 2 (18/3/22)                                                        #
+# Released under the Open Government License v3.0                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
 # Set up ----
 
 library(tidyverse)
@@ -15,7 +23,7 @@ source(here("R/plotting_helpers.R"))
 
 # Wave one vs wave two
 w1_start <- as.Date("2020-03-11") # WHO pandemic definition
-w2_start <- as.Date("2020-09-02") # Should probably use 2/9 (Closest Weds to 1/9, ICNARC)
+w2_start <- as.Date("2020-09-02") # (Closest Weds to 1/9 i.e. ONS/ICNARC definitionp)
 w1_end   <- as.Date(w2_start - days(1)) 
 w2_end   <- as.Date(w1_start + days(363)) # 363 days as leap year
 

@@ -2,6 +2,8 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Helper functions for generating plots/tables                             #
 # Nick Plummer (nickplummer@cantab.net)                                       #
+# Revision 2 (18/3/22)                                                        #
+# Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 # Regression functions ----
@@ -14,11 +16,13 @@ regression_table <- function(regression) {
     gtsummary::as_flex_table()
 }
 
-plot_regression <- function(regression, ylab, xlab = "Mean ventilated COVID-19") {
+plot_regression <- function(regression, ylab, xlab = "Mean weekly ventilated COVID-19 patients") {
   # Plots regression of $OUTCOME on [ventilated] patients, interaction by wave
   sjPlot::plot_model(regression, type = "int", show.data = TRUE) +
     theme_classic() +
     theme(legend.position = c(.85, .85)) +
+    scale_x_continuous(breaks = seq(0,4.25,.5),
+                       labels = seq(0,4250,500)) +
     xlab(xlab) +
     ylab(ylab) +
     ggtitle("")
@@ -47,11 +51,27 @@ intervention_label <- function(label, date, y_height, angle = 90, delay = 4) {
 
 # Between wave comparisons ----
 
-do_wave_comparison <- function(dt, values_from) {
-  # Compares a given group by wave
+## Mortality data ----
+do_year_comparison <- function(dt, values_from) {
   dt %>% 
     # Split into wave/yr
     separate(period, sep = "_", into = c("wave", "yr")) %>% 
+    # Pivot by year
+    group_by(yr) %>%
+    summarise(total = sum(total)) %>% 
+    pivot_wider(names_from = "yr", values_from = values_from) %>% 
+    # Do Poisson tests between years
+    rowwise %>% 
+    mutate(rate_ratio = poisson.test(c(`20`,`19`))$estimate,
+           conf_int_l = poisson.test(c(`20`,`19`))$conf.int[1],
+           conf_int_h = poisson.test(c(`20`,`19`))$conf.int[2],
+           p_value = poisson.test(c(`20`,`19`))$p.value)
+}
+
+do_wave_comparison <- function(dt, values_from) {
+  # Compares a given group by wave
+  dt %>% 
+    separate(period, sep = "_", into = c("wave", "yr")) %>% # Split into wave/yr
     # Pivot by year
     group_by(wave) %>%
     pivot_wider(names_from = "yr", values_from = values_from) %>% 
@@ -63,21 +83,42 @@ do_wave_comparison <- function(dt, values_from) {
            p_value = poisson.test(c(`20`,`19`))$p.value)
 }
 
+## Referral rate data ----
 do_ref_rate_comparison <- function(dt, rtype, period_string) {
   # Compares referral types ("all", "DBD", "DCD") by period ("^wave1" or "^wave2")
   dt %>% filter(ref_type == rtype,
          str_detect(period, period_string)) %>% 
+    arrange(desc(period)) %>% 
     select(total_refd, total_not_refd) %>% 
-    rstatix::prop_test(detailed = TRUE) %>% 
-    mutate(delta = estimate1-estimate2)
+    rstatix::fisher_test(detailed = TRUE)
 }
 
+do_ref_rate_year_comparison <- function(dt, rtype) {
+  dt %>%
+    filter(ref_type == rtype) %>% 
+    separate(period, sep = "_", into = c("wave", "yr")) %>% # Split into wave/yr
+    group_by(yr) %>%
+    summarise(across(is.numeric, sum)) %>% 
+    arrange(desc(yr)) %>% 
+    select(total_refd, total_not_refd) %>% 
+    rstatix::fisher_test(detailed = TRUE)
+}
+
+## PDA data ----
 do_rate_comparison <- function(dt, period_string, positives, negatives) {
   # Compares referral types ("all", "DBD", "DCD") by period ("^wave1" or "^wave2")
   dt %>% filter(str_detect(period, period_string)) %>% 
+    arrange(desc(period)) %>% 
     select(positives, negatives) %>% 
-    rstatix::prop_test(detailed = TRUE) %>% 
-    mutate(delta = estimate1-estimate2)
+    rstatix::fisher_test(detailed = TRUE)
+}
+
+do_year_rate_comparison <- function(dt, positives, negatives) {
+  # Compares referral types ("all", "DBD", "DCD") by period ("^wave1" or "^wave2")
+  dt %>% filter(str_detect(period, "20$")) %>% 
+    arrange(period) %>% 
+    select(positives, negatives) %>% 
+    rstatix::fisher_test(detailed = TRUE)
 }
 
 # Alluvial plot

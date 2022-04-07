@@ -2,24 +2,34 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Analysis of referral rates and approaches                                #
 # Nick Plummer (nickplummer@cantab.net)                                       #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Revision 2 (18/3/22)                                                        #
+# Released under the Open Government License v3.0                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 source(here::here("R/set_up.R"))
 
-referrals_long <- get_referrals()
+referrals_long <- get_referrals() %>% mutate(total_pc = 100*total_refd/total_meeting)
 pda_data_all <- get_pda_data()
 
 # Table 6: Referrals by period ----
 
+### Totals and percentages ----
+referrals_long %>% filter(ref_type == "all")
+referrals_long %>% filter(ref_type == "dbd")  
+referrals_long %>% filter(ref_type == "dcd")
+
 ### All ----
+referrals_long %>% do_ref_rate_year_comparison(rtype = "all")
 referrals_long %>% do_ref_rate_comparison(rtype = "all", period_string = "^wave1")
 referrals_long %>% do_ref_rate_comparison(rtype = "all", period_string = "^wave2")
 
 ### DBD ----
+referrals_long %>% do_ref_rate_year_comparison(rtype = "dbd")
 referrals_long %>% do_ref_rate_comparison(rtype = "dbd", period_string = "^wave1")
 referrals_long %>% do_ref_rate_comparison(rtype = "dbd", period_string = "^wave2")
 
 ### DCD ----
+referrals_long %>% do_ref_rate_year_comparison(rtype = "dcd")
 referrals_long %>% do_ref_rate_comparison(rtype = "dcd", period_string = "^wave1")
 referrals_long %>% do_ref_rate_comparison(rtype = "dcd", period_string = "^wave2")
 
@@ -30,111 +40,115 @@ referrals_long %>% do_ref_rate_comparison(rtype = "dcd", period_string = "^wave2
 pda_data_all %>% 
   select(period, eligible_donor) %>% 
   do_wave_comparison(values_from = "eligible_donor")
+
+pda_data_all %>% 
+  select(period, eligible_donor) %>%
+  rename(total = eligible_donor) %>% 
+  do_year_comparison(values_from = "total")
   
 ## Approaches ----
 
 # Numbers for table
-pda_data_all %>% 
-  select(period, eligible_donor_family_approached, eligible_donor) %>% 
-  mutate(eligible_donor_family_not_approached = eligible_donor - eligible_donor_family_approached) %>% 
-  select(period, eligible_donor_family_approached, eligible_donor_family_not_approached)
+(approaches <- pda_data_all %>% 
+  select(period, eligible_donor, eligible_donor_family_approached, ) %>% 
+  mutate(eligible_donor_family_not_approached = eligible_donor - eligible_donor_family_approached,
+         eligible_donor_approached_pc = eligible_donor_family_approached/eligible_donor))
 
 # Comparison to pre-pandemic
-pda_data_all %>% 
-  select(period, eligible_donor_family_approached, eligible_donor) %>% 
-  mutate(eligible_donor_family_not_approached = eligible_donor - eligible_donor_family_approached) %>% 
-  do_rate_comparison(period_string = "^wave1", positives = "eligible_donor_family_approached", negatives = "eligible_donor_family_not_approached")
-pda_data_all %>% 
-  select(period, eligible_donor_family_approached, eligible_donor) %>% 
-  mutate(eligible_donor_family_not_approached = eligible_donor - eligible_donor_family_approached) %>% 
-  do_rate_comparison(period_string = "^wave2", positives = "eligible_donor_family_approached", negatives = "eligible_donor_family_not_approached")
+approaches %>% do_rate_comparison(period_string = "^wave1", positives = "eligible_donor_family_approached", negatives = "eligible_donor_family_not_approached")
+approaches %>% do_rate_comparison(period_string = "^wave2", positives = "eligible_donor_family_approached", negatives = "eligible_donor_family_not_approached")
 
 # Comparison between waves
-pda_data_all %>% 
-  mutate(eligible_not_approached = eligible_donor - eligible_donor_family_approached) %>% 
-  do_rate_comparison(period_string = "20$", positives = "donated", negatives = "eligible_not_approached")
+approaches %>% do_year_rate_comparison(positives = "eligible_donor_family_approached", negatives = "eligible_donor_family_not_approached")
 
 ## Family consent rate  ----
 
 # Numbers for table
-pda_data_all %>% 
-  filter(str_detect(period, "^wave2")) %>% 
+(consents <- pda_data_all %>% 
   select(period, eligible_donor_family_approached, eligible_donor_family_approached_consented) %>% 
-  mutate(eligible_donor_family_approached_not_consented = eligible_donor_family_approached - eligible_donor_family_approached_consented) %>% 
-  select(eligible_donor_family_approached_consented, eligible_donor_family_approached_not_consented)
+  mutate(eligible_donor_family_approached_not_consented = eligible_donor_family_approached - eligible_donor_family_approached_consented,
+         eligible_donor_family_consented_pc = eligible_donor_family_approached_consented/eligible_donor_family_approached))
 
 # Comparison to pre-pandemic
-pda_data_all %>% 
-  select(period, eligible_donor_family_approached, eligible_donor_family_approached_consented) %>% 
-  mutate(eligible_donor_family_approached_not_consented = eligible_donor_family_approached - eligible_donor_family_approached_consented) %>% 
-  do_rate_comparison(period_string = "^wave1", positives = "eligible_donor_family_approached_consented", negatives = "eligible_donor_family_approached_not_consented")
-pda_data_all %>% 
-  select(period, eligible_donor_family_approached, eligible_donor_family_approached_consented) %>% 
-  mutate(eligible_donor_family_approached_not_consented = eligible_donor_family_approached - eligible_donor_family_approached_consented) %>% 
-  do_rate_comparison(period_string = "^wave2", positives = "eligible_donor_family_approached_consented", negatives = "eligible_donor_family_approached_not_consented")
+consents %>% do_rate_comparison(period_string = "^wave1", positives = "eligible_donor_family_approached_consented", negatives = "eligible_donor_family_approached_not_consented")
+consents %>% do_rate_comparison(period_string = "^wave2", positives = "eligible_donor_family_approached_consented", negatives = "eligible_donor_family_approached_not_consented")
 
 # Comparison between waves
-pda_data_all %>% 
-  select(period, eligible_donor_family_approached, eligible_donor_family_approached_consented) %>% 
-  mutate(eligible_donor_family_approached_not_consented = eligible_donor_family_approached - eligible_donor_family_approached_consented) %>% 
-  do_rate_comparison(period_string = "20$", positives = "eligible_donor_family_approached_consented", negatives = "eligible_donor_family_approached_not_consented")
+consents %>% do_year_rate_comparison(positives = "eligible_donor_family_approached_consented", negatives = "eligible_donor_family_approached_not_consented")
 
 ## SNOD rates ----
 
 # Numbers for table
-pda_data_all %>% 
-  filter(str_detect(period, "^wave2")) %>% 
-  select(eligible_donor_family_approached_with_snod, eligible_donor_family_approached_without_snod)
+(snods <- pda_data_all %>% 
+  select(period, eligible_donor_family_approached_with_snod, eligible_donor_family_approached_without_snod) %>% 
+  mutate(eligible_donor_family_approached_with_snod_pc = eligible_donor_family_approached_with_snod / (eligible_donor_family_approached_with_snod + eligible_donor_family_approached_without_snod)) )
 
 # Approaches with SNODS verses pre-pandemic
-pda_data_all %>% 
-  do_rate_comparison(period_string = "^wave1", positives = "eligible_donor_family_approached_with_snod", negatives = "eligible_donor_family_approached_without_snod")
-pda_data_all %>% 
-  do_rate_comparison(period_string = "^wave2", positives = "eligible_donor_family_approached_with_snod", negatives = "eligible_donor_family_approached_without_snod")
+snods %>% do_rate_comparison(period_string = "^wave1", positives = "eligible_donor_family_approached_with_snod", negatives = "eligible_donor_family_approached_without_snod")
+snods %>% do_rate_comparison(period_string = "^wave2", positives = "eligible_donor_family_approached_with_snod", negatives = "eligible_donor_family_approached_without_snod")
 
 # SNOD presence between waves
-pda_data_all %>% 
-  do_rate_comparison(period_string = "20$", positives = "eligible_donor_family_approached_with_snod", negatives = "eligible_donor_family_approached_without_snod")
+snods %>% do_year_rate_comparison(positives = "eligible_donor_family_approached_with_snod", negatives = "eligible_donor_family_approached_without_snod")
 
-# Consent rate with SNOD present
-pda_data_all %>% 
+# Consent rates vs SNOD present
+(snod_consent <- pda_data_all %>% 
   select(period, 
          eligible_donor_family_approached_with_snod, eligible_donor_family_approached_with_snod_consented,
          eligible_donor_family_approached_without_snod, eligible_donor_family_approached_without_snod_consented) %>% 
   mutate(snod_no_consent = eligible_donor_family_approached_with_snod - eligible_donor_family_approached_with_snod_consented,
-         no_snod_no_consent = eligible_donor_family_approached_without_snod - eligible_donor_family_approached_without_snod_consented) %>% 
-  do_rate_comparison(period_string = "20$", positives = "eligible_donor_family_approached_with_snod_consented", negatives = "snod_no_consent")
+         no_snod_no_consent = eligible_donor_family_approached_without_snod - eligible_donor_family_approached_without_snod_consented,
+         snod_consent_pc = 100*eligible_donor_family_approached_with_snod_consented/eligible_donor_family_approached_with_snod,
+         no_snod_consent_pc = 100*eligible_donor_family_approached_without_snod_consented/eligible_donor_family_approached_without_snod))
 
-
+# Consent rate with SNOD
+snod_consent %>% 
+  do_year_rate_comparison(positives = "eligible_donor_family_approached_with_snod_consented", negatives = "snod_no_consent")
 # Consent rate without SNOD present
-pda_data_all %>% 
-  select(period, 
-         eligible_donor_family_approached_with_snod, eligible_donor_family_approached_with_snod_consented,
-         eligible_donor_family_approached_without_snod, eligible_donor_family_approached_without_snod_consented) %>% 
-  mutate(snod_no_consent = eligible_donor_family_approached_with_snod - eligible_donor_family_approached_with_snod_consented,
-         no_snod_no_consent = eligible_donor_family_approached_without_snod - eligible_donor_family_approached_without_snod_consented) %>% 
-  do_rate_comparison(period_string = "20$", positives = "eligible_donor_family_approached_without_snod_consented", negatives = "no_snod_no_consent")
+snod_consent %>% 
+  do_year_rate_comparison(positives = "eligible_donor_family_approached_without_snod_consented", negatives = "no_snod_no_consent")
 
 ## Donations ----
 
-# Numbers for table
 pda_data_all %>% 
+  select(period, donated) %>%
+  rename(total = donated) %>% 
+  do_year_comparison(values_from = "total")
+
+# Numbers for table
+(donated <- pda_data_all %>% 
   select(period, donated, eligible_donor_family_approached_consented) %>% 
-  mutate(eligible_but_no_donation = eligible_donor_family_approached_consented - donated) %>% 
-  select(period, donated, eligible_but_no_donation)
+  mutate(eligible_but_no_donation = eligible_donor_family_approached_consented - donated,
+         donated_pc = 100*donated/eligible_donor_family_approached_consented))
 
 # Of those approached, vs pre-pandemic
-pda_data_all %>% 
-  mutate(eligible_but_no_donation = eligible_donor_family_approached_consented - donated) %>% 
-  do_rate_comparison(period_string = "^wave1", positives = "donated", negatives = "eligible_but_no_donation")
-pda_data_all %>% 
-  mutate(eligible_but_no_donation = eligible_donor_family_approached_consented - donated) %>% 
-  do_rate_comparison(period_string = "^wave2", positives = "donated", negatives = "eligible_but_no_donation")
+donated %>% do_rate_comparison(period_string = "^wave1", positives = "donated", negatives = "eligible_but_no_donation")
+donated %>% do_rate_comparison(period_string = "^wave2", positives = "donated", negatives = "eligible_but_no_donation")
 
 # As a proportion of all comers, by wave
-pda_data_all %>% 
+(donated_all <- pda_data_all %>% 
+  select(period, donated, eligible_donor) %>% 
+  mutate(eligible_no_donation = eligible_donor - donated,
+         donated_pc = 100*donated/eligible_donor))
+
+# Comparision between waves
+donated_all %>% 
+  do_year_rate_comparison(positives = "donated", negatives = "eligible_no_donation")
+
+# Whole year comparison
+(whole_year_pda <- pda_data_all %>% separate(period, sep = "_", into = c("wave", "yr")) %>% # Split into wave/yr
+  group_by(yr) %>%
   mutate(eligible_no_donation = eligible_donor - donated) %>% 
-  do_rate_comparison(period_string = "20$", positives = "donated", negatives = "eligible_no_donation")
+  summarise(across(is.numeric, sum)) )
+  
+whole_year_pda %>% 
+  arrange(desc(yr)) %>% 
+  select(donated, eligible_no_donation) %>% 
+  rstatix::fisher_test(detailed = TRUE)
+
+whole_year_pda %>% 
+  arrange(desc(yr)) %>% 
+  select(donated, eligible_no_donation) %>% 
+  mutate
 
 # Figure 5: Alluvial charts ----
 
@@ -178,16 +192,18 @@ alluvial_data %>%
   # Label with name and percentage
   geom_label(stat = "stratum",
              aes(label = paste(after_stat(stratum), scales::percent(after_stat(prop), accuracy = .1))),
-             size = 2.5) +
+             size = 3.5) +
   # Facet by wave and relabel
   facet_wrap(~period,
              nrow = 2,
              scales = "fixed",
              labeller = labeller(period = period_labels)) +
   scale_x_discrete() + # Get rid of x-labels and fit onto image
-  labs(y = "Number of eligible donors") +
-  theme_minimal() +
-  theme(legend.position = "none")
+  labs(y = "Number of eligible donors",
+       x = "Organ donation pathway") +
+  cowplot::theme_cowplot() +
+  theme(legend.position = "none",
+        strip.background = element_blank())
 
 
 

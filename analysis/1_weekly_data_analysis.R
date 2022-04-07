@@ -2,6 +2,8 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Analysis of weekly donation/transplant and COVID data                    #
 # Nick Plummer (nickplummer@cantab.net)                                       #
+# Revision 2 (18/3/22)                                                        #
+# Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 source(here::here("R/set_up.R"))
@@ -20,7 +22,10 @@ wave_data_weekly <- all_data_weekly %>%
                                 wc >= age_1_date & wc < age_2_date ~ "restrict_1",
                                 wc >= age_2_date & wc < age_3_date ~ "restrict_2",
                                 wc >= age_3_date & wc < age_4_date ~ "restrict_3",
-                                wc >= age_4_date                   ~ "restrict_0"))
+                                wc >= age_4_date                   ~ "restrict_0"),
+         ventilated = ventilated/1000, # Modify patients to 1k so
+         hospital   = hospital  /1000) # regressions are interpreable
+                                       
 
 ### a) Referrals ----
 ref <- glm(referrals ~ ventilated * wave + int_period,
@@ -269,14 +274,14 @@ ratio_data %>%
 
 ## Tables S1-S8 ----
 
-regression_table(ref) # S1
-regression_table(don) # S2
-regression_table(ret) # S3
-regression_table(trans) # S4
+regression_table(ref)    # S1
+regression_table(don)    # S2
+regression_table(ret)    # S3
+regression_table(trans)  # S4
 regression_table(livers) # S5
 regression_table(kidn_v) # S6a
-regression_table(kidn_h)  # S6b
+regression_table(kidn_h) # S6b
 
 sjPlot::tab_model(ratio_lm) # S7 (add p-values to table 3)
-sjPlot::tab_model(tg) # S8
+sjPlot::tab_model(tg)       # S8
 

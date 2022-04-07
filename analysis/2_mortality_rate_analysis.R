@@ -2,6 +2,8 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Analysis of mortality rates between weeks                                #
 # Nick Plummer (nickplummer@cantab.net)                                       #
+# Revision 2 (18/3/22)                                                        #
+# Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 source(here::here("R/set_up.R"))
@@ -22,31 +24,37 @@ mortality_long %>%
   do_wave_comparison(values_from = "total")
 
 ## Non-COVID mortality ----
-mortality_long %>% 
+non_cov <- mortality_long %>% 
   filter(covid_status == "noncovid") %>% 
   group_by(period) %>% 
   # Combine ALL deaths by period
-  summarise_if(is.numeric, sum) %>% 
-  # Compare by waves
-  do_wave_comparison(values_from = "total")
+  summarise_if(is.numeric, sum)
+
+# Compare by waves
+non_cov %>% do_wave_comparison(values_from = "total")
+
+# Compare overall 12months
+non_cov %>% do_year_comparison(values_from = "total")
+
 
 # Table 5: Specific non-COVID mortality ----
 
 ## Cardiac arrests ----
-mortality_wide %>% 
-  # Select cardiac arrests from granular dataset (combined into cardiac causes in long)
+# Select cardiac arrests from granular dataset (combined into cardiac causes in long)
+cardiac_arrests <- mortality_wide %>% 
   filter(cause_of_death == "Cardiac arrest") %>% 
   pivot_longer(cols = -cause_of_death,
                names_to = c("period", "covid_status"),
                names_pattern = "(.*)\\.(.*)",
                values_to = "total") %>% 
   filter(covid_status == "noncovid") %>% 
-  select(-c(cause_of_death, covid_status)) %>% 
-  # Compare by waves
-  do_wave_comparison(values_from = "total")
+  select(-c(cause_of_death, covid_status)) 
+
+cardiac_arrests %>% do_year_comparison(values_from = "total")
+cardiac_arrests %>% do_wave_comparison(values_from = "total")
 
 ## Neuro catastrophies ----
-mortality_wide %>% 
+neuro <- mortality_wide %>% 
   filter(cause_of_death %in% c(
     "Intracranial haemorrhage",
     "Intracranial thrombosis",
@@ -59,46 +67,51 @@ mortality_wide %>%
                values_to = "total") %>% 
   filter(covid_status == "noncovid") %>% 
   group_by(period) %>% 
-  summarise_if(is.numeric, sum) %>% 
-  # Compare by waves
-  do_wave_comparison(values_from = "total")
+  summarise_if(is.numeric, sum) 
+
+neuro %>% do_year_comparison(values_from = "total")
+neuro %>% do_wave_comparison(values_from = "total")
 
 ## Suicide/DSH  ----
-mortality_long %>% 
+suidice_dsh <- mortality_long %>% 
   filter(covid_status == "noncovid",
          cause_of_death == "DSH/suicide") %>% 
   group_by(period) %>% 
-  summarise_if(is.numeric, sum) %>% 
-  # Compare by waves
-  do_wave_comparison(values_from = "total")
+  summarise_if(is.numeric, sum) 
+
+suidice_dsh %>% do_year_comparison(values_from = "total")
+suidice_dsh %>% do_wave_comparison(values_from = "total")
 
 
 ## RTCs ----
-mortality_long %>% 
+rtcs <- mortality_long %>% 
   filter(covid_status == "noncovid",
          cause_of_death == "RTC") %>% 
   group_by(period) %>% 
-  summarise_if(is.numeric, sum) %>% 
-  # Compare by waves
-  do_wave_comparison(values_from = "total")
+  summarise_if(is.numeric, sum)
+
+rtcs %>% do_year_comparison(values_from = "total")
+rtcs %>% do_wave_comparison(values_from = "total")
 
 ## Respiratory ----
-mortality_long %>% 
+respiratory <- mortality_long %>% 
   filter(covid_status == "noncovid",
          cause_of_death == "Respiratory") %>% 
   group_by(period) %>% 
-  summarise_if(is.numeric, sum) %>% 
-  # Compare by waves
-  do_wave_comparison(values_from = "total")
+  summarise_if(is.numeric, sum) 
+
+respiratory %>% do_year_comparison(values_from = "total")
+respiratory %>% do_wave_comparison(values_from = "total")
 
 ## MOF ----
-mortality_long %>% 
+mof <- mortality_long %>% 
   filter(covid_status == "noncovid",
          cause_of_death == "MOF") %>% 
   group_by(period) %>% 
-  summarise_if(is.numeric, sum) %>% 
-  # Compare by waves
-  do_wave_comparison(values_from = "total")
+  summarise_if(is.numeric, sum)
+
+mof %>% do_year_comparison(values_from = "total")
+mof %>% do_wave_comparison(values_from = "total")
 
 # Figure 4: Mortality plots ----
 
@@ -129,11 +142,12 @@ mortality_long %>%
                      values = c(1.0, 0.6)) +
   scale_fill_brewer(name = "Cause of death",
                     palette = "Paired") +
-  # ggpattern::scale_pattern_manual(values = c(covid = "stripe", noncovid = "none")) +
-  ggthemes::theme_few() +
+  #ggpattern::scale_pattern_manual(values = c(covid = "stripe", noncovid = "none")) +
+  #ggthemes::theme_few() +
+  cowplot::theme_cowplot() +
   xlab("") +
   ylab("Total audited deaths") +
   scale_y_continuous(expand = c(0,0), # Force x-axis to start at zero
                      limits = c(0,7200)) +
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank())
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        strip.background = element_blank())
