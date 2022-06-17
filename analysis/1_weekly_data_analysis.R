@@ -2,7 +2,7 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Analysis of weekly donation/transplant and COVID data                    #
 # Nick Plummer (nickplummer@cantab.net)                                       #
-# Revision 2 (18/3/22)                                                        #
+# Revision 3 (17/6/22)                                                        #
 # Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -122,9 +122,9 @@ plot_donations_all <- all_data_weekly %>%
                        values = c("Darkblue", "Pink", "Darkgreen", "Purple")) +
     # Annotate waves
     geom_vline(xintercept = w1_start, linetype = "dashed") +
-    graph_label(label = "1st \"wave\"", start = w1_start, end = w1_end, y_height = 125) +
+    graph_label(label = "1st \'wave\'", start = w1_start, end = w1_end, y_height = 125) +
     geom_vline(xintercept = w2_start, linetype = "dashed") +
-    graph_label(label = "2nd \"wave\"", start = w2_start, end = w2_end, y_height = 125) +
+    graph_label(label = "2nd \'wave\'", start = w2_start, end = w2_end, y_height = 125) +
     geom_vline(xintercept = w2_end, linetype = "dashed") +
     # Set time-series scale
     date_scale(start = w1_start, end = w2_end, extra_days = 7) +
@@ -133,7 +133,8 @@ plot_donations_all <- all_data_weekly %>%
     theme(legend.box = "horizontal", legend.position = "top") +
     xlab("Week commencing") +
     theme(axis.text.x = element_text(angle = 45, vjust = 1.0, hjust=1, size = 9)) +
-    ylab("") 
+    ylab("") +
+    theme (legend.title = element_blank(), legend.position ="none")
   
 
 plot_covid_all <- all_data_weekly %>% 
@@ -156,7 +157,7 @@ plot_covid_all <- all_data_weekly %>%
     graph_label(label = ld5_label, start = ld5_start, end = ld5_end, y_height = 20000, angle = 90) +
     # Color scheme and legend
     scale_color_manual(name = "Mean weekly:",
-                     labels = c("Hospitalised COVID-19 patients", "COVID-19 patients being ventilated"),
+                     labels = c("People hospitalised with COVID-19", "People with COVID-19 undergoing mechanical ventilation"),
                      values = c("Blue", "Red")) +
     # Set time-series scale
     date_scale(start = w1_start, end = w2_end, extra_days = 7) +
@@ -165,21 +166,24 @@ plot_covid_all <- all_data_weekly %>%
     theme(legend.box = "horizontal", legend.position = "top") +
     xlab("Week commencing") +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ylab("")
+    ylab("") +
+    theme (legend.title = element_blank(), legend.position ="none")
     
 
 # Plot with combined x axis (800w for poster)
-egg::ggarrange(plot_covid_all + # Remove x-axis
+fig1 <- egg::ggarrange(plot_covid_all + # Remove x-axis
                  theme(axis.text.x = element_blank(),
                        axis.title.x = element_blank()),
                plot_donations_all,
                ncol = 1)
 
+ggsave(plot = fig1, filename = "output/figure1.png", width = 297, height = 210, units = "mm")
+
 ## Fig 2: Referrals/donation/transplant by waves ----
 
 # Individual plots
-fig2a <- plot_regression(ref, ylab = "Weekly referrals")
-fig2b <- plot_regression(don, ylab = "Weekly organ donors")
+fig2a <- plot_regression(ref, ylab = "Referrals to NHSBT")
+fig2b <- plot_regression(don, ylab = "Organ donors")
 fig2c <- plot_regression(ret, ylab = "Organs retrieved")
 fig2d <- plot_regression(trans, ylab = "Organs transplanted")
 fig2e <- plot_regression(livers, ylab = "Livers transplanted")
@@ -187,9 +191,15 @@ fig2f <- plot_regression(kidn_v, ylab = "Kidneys transplanted")
 #fig2x <- plot_regression(kidn_h, ylab = "Total weekly kidneys transplanted", xlab = "Mean weekly hospitalised COVID-19 patients")
 
 # Build uberplot
-ggpubr::ggarrange(fig2a, fig2b, fig2c,
-                  fig2d, fig2e, fig2f,
+fig2 <- ggpubr::ggarrange(fig2a + theme (legend.title = element_blank(), legend.position ="none"),
+                  fig2b + theme (legend.title = element_blank(), legend.position ="none"), 
+                  fig2c + theme (legend.title = element_blank(), legend.position ="none"),
+                  fig2d + theme (legend.title = element_blank(), legend.position ="none"), 
+                  fig2e + theme (legend.title = element_blank(), legend.position ="none"),
+                  fig2f + theme (legend.title = element_blank(), legend.position ="none"),
                   labels = "auto", common.legend = TRUE)
+  
+ggsave(plot = fig2, filename = "output/figure2.png", width = 297, height = 210, units = "mm")
 
 ## Fig 3: DBD/DCD ratio ----
 
@@ -229,7 +239,8 @@ plot_ratio <-
   #theme(legend.box = "horizontal", legend.position = c(0.8, 0.5)) +
   xlab("Week commencing") +
   ylab("") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1.0, hjust=1, size = 9))
+  theme(axis.text.x = element_text(angle = 45, vjust = 1.0, hjust=1, size = 9))  +
+  theme (legend.title = element_blank(), legend.position ="none")
 
 
 plot_vent <- all_data_weekly %>% 
@@ -250,13 +261,16 @@ plot_vent <- all_data_weekly %>%
   theme(legend.box = "horizontal", legend.position = c(0.5, 0.9)) +
   xlab("Week commencing") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  ylab("")
+  ylab("")  +
+  theme (legend.title = element_blank(), legend.position ="none")
 
-egg::ggarrange(plot_vent + # Remove x-axis
+fig3 <- egg::ggarrange(plot_vent + # Remove x-axis
                  theme(axis.text.x = element_blank(),
                        axis.title.x = element_blank()),
                plot_ratio,
                ncol = 1)
+
+ggsave(plot = fig3, filename = "output/figure3.png", width = 297, height = 210, units = "mm")
 
 # Tables----
 

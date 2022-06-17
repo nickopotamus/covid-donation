@@ -2,7 +2,7 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Helper functions for generating plots/tables                             #
 # Nick Plummer (nickplummer@cantab.net)                                       #
-# Revision 2 (18/3/22)                                                        #
+# Revision 3 (17/6/22)                                                        #
 # Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -16,11 +16,13 @@ regression_table <- function(regression) {
     gtsummary::as_flex_table()
 }
 
-plot_regression <- function(regression, ylab, xlab = "Mean weekly ventilated COVID-19 patients") {
+plot_regression <- function(regression, ylab, xlab = "People with COVID-19 undergoing mechanical ventilation") {
   # Plots regression of $OUTCOME on [ventilated] patients, interaction by wave
   sjPlot::plot_model(regression, type = "int", show.data = TRUE) +
     theme_classic() +
-    theme(legend.position = c(.85, .85)) +
+    theme(legend.position = c(.85, .85),
+          axis.title.x = element_text(size = "9"),
+          axis.title.y = element_text(size = "9")) +
     scale_x_continuous(breaks = seq(0,4.25,.5),
                        labels = seq(0,4250,500)) +
     xlab(xlab) +

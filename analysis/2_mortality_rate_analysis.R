@@ -2,7 +2,7 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Analysis of mortality rates between weeks                                #
 # Nick Plummer (nickplummer@cantab.net)                                       #
-# Revision 2 (18/3/22)                                                        #
+# Revision 3 (17/6/22)                                                        #
 # Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -120,14 +120,13 @@ period_labs_rows = c("wave1" = "1st wave (March - September)",
 period_labs_cols = c("19" = "Pre-pandemic (2019-2020)",
                      "20" = "Pandemic (2020-2021)")
 
-mortality_long %>% 
+fig4 <- mortality_long %>% 
   separate(period, into = c("wave", "yy")) %>% 
-  ggplot() +
-  geom_bar(aes(y = total,
-               x = cause_of_death,
-               fill = cause_of_death,
-               alpha = covid_status),
-           stat = "identity", position = "stack", colour = "black", size = 0.5) +
+  ggplot(aes(y = total,
+             x = cause_of_death,
+             fill = cause_of_death,
+             alpha = covid_status)) +
+  geom_bar(stat = "identity", position = "stack", colour = "black", size = 0.5) +
   # ggpattern::geom_bar_pattern(data = mortality_long,
   #                             aes(y = total, 
   #                                 x = cause_of_death, 
@@ -135,13 +134,13 @@ mortality_long %>%
   #                                 pattern = covid_status),
   #                             stat = "identity",
   #                             position = "stack") +
-  facet_grid(cols = vars(yy), rows = vars(wave),
+  facet_grid(cols = vars(yy), rows = vars(wave), switch = "x",
              labeller = labeller(yy = period_labs_cols, wave = period_labs_rows)) +
   scale_alpha_manual(name = "COVID-19 status",
                      labels = c("Positive", "Negative"),
                      values = c(1.0, 0.6)) +
   scale_fill_brewer(name = "Cause of death",
-                    palette = "Paired") +
+                    palette = "RdYlBu") +
   #ggpattern::scale_pattern_manual(values = c(covid = "stripe", noncovid = "none")) +
   #ggthemes::theme_few() +
   cowplot::theme_cowplot() +
@@ -149,5 +148,8 @@ mortality_long %>%
   ylab("Total audited deaths") +
   scale_y_continuous(expand = c(0,0), # Force x-axis to start at zero
                      limits = c(0,7200)) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-        strip.background = element_blank())
+  theme(axis.ticks.x = element_blank(), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.background = element_blank(), legend.title = element_blank(), legend.position ="none",
+        plot.background = element_rect(fill = "white"))
+
+ggsave(plot = fig4, filename = "output/figure4.png", width = 297, height = 210, units = "mm")

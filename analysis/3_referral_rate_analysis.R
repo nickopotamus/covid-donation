@@ -2,7 +2,7 @@
 # Exploring the impact of COVID-19 on organ donation and transplant rates     #
 #  - Analysis of referral rates and approaches                                #
 # Nick Plummer (nickplummer@cantab.net)                                       #
-# Revision 2 (18/3/22)                                                        #
+# Revision 3 (17/6/22)                                                        #
 # Released under the Open Government License v3.0                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -161,7 +161,7 @@ period_labels <- c("1st wave (March 2020 - September 2020)",
 names(period_labels) <- c(3,4)
 
 # Plot...
-alluvial_data %>% 
+fig5 <- alluvial_data %>% 
   # Select appropriate data and make alluvial ready
   filter(path_eli == "Eligible" & period %in% c(3,4)) %>% 
   group_by(period, 
@@ -203,8 +203,10 @@ alluvial_data %>%
        x = "Organ donation pathway") +
   cowplot::theme_cowplot() +
   theme(legend.position = "none",
-        strip.background = element_blank())
+        strip.background = element_blank(),
+        plot.background = element_rect(fill = "white"))
 
+ggsave(plot = fig5, filename = "output/figure5.png", width = 297, height = 210, units = "mm")
 
 
 
